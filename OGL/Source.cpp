@@ -1,12 +1,11 @@
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <SOIL.h>
 
 #include "Shader.h"
 
 #include <iostream>
-#include <fstream>
-#include <string>
 using namespace std;
 
 bool isWireFrameOn = false;
@@ -23,27 +22,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 // Window dimensions
 const GLuint WIDTH = 800, HEIGHT = 600;
-
-string readFile(const char* file)
-{
-    string content;
-    ifstream fs(file, ios::in);
-
-    if (!fs.is_open())
-    {
-        cerr << "Could not open file " << file << endl;
-    }
-
-    string line = "";
-    while (!fs.eof())
-    {
-        getline(fs, line);
-        content.append(line + "\n");
-    }
-
-    fs.close();
-    return content;
-}
 
 int main()
 {
@@ -85,15 +63,22 @@ int main()
     GLfloat vertices[] = {
          0.5f,  0.5f,  0.0f,  // Top Right
          0.5f, -0.5f,  0.0f,  // Bottom Right
-        -0.5f,  0.5f,  0.0f,  // Top Left
-        -0.5f, -0.5f,  0.0f   // Bottom Left
+        -0.5f, -0.5f,  0.0f,  // Bottom Left
+        -0.5f,  0.5f,  0.0f   // Top Left
     };
 
     GLfloat vertex_colors[] = {
         1.0f,  0.0f,  0.0f,  // Top Right Color
         0.0f,  1.0f,  0.0f,  // Bottom Right Color
-        0.0f,  0.0f,  1.0f,  // Top Left Color
-        0.0f,  0.0f,  0.0f   // Bottom Left Color
+        0.0f,  0.0f,  1.0f,  // Bottom Left Color
+        1.0f,  1.0f,  0.0f   // Top Left Color
+    };
+
+    GLfloat texture_coords[] = {
+        1.0f,  1.0f,  // Top Right 
+        1.0f,  0.0f,  // Bottom Right 
+        0.0f,  0.0f,  // Bottom Left 
+        0.0f,  1.0f   // Top Left 
     };
 
 
@@ -113,9 +98,44 @@ int main()
 
     // Specify triangles to draw
     GLuint indices[] = {
-        0, 1, 2, // First Triangle
-        1, 3, 2  // Second Triangle
+        0, 1, 3, // First Triangle
+        1, 2, 3  // Second Triangle
     };
+
+    // Load Textures
+    GLuint texture1, texture2;
+
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    // Set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // Set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int imgW, imgH;
+    unsigned char* image = SOIL_load_image("container.jpg", &imgW, &imgH, 0, SOIL_LOAD_RGB);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgW, imgH, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    SOIL_free_image_data(image);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // Set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // Set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    image = SOIL_load_image("awesomeface.png", &imgW, &imgH, 0, SOIL_LOAD_RGB);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgW, imgH, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    SOIL_free_image_data(image);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
 
     GLuint EBO, VBO, VAO;
     glGenBuffers(1, &EBO);
@@ -130,20 +150,19 @@ int main()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     // 3. Bind and copy vertex array into VBO
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices)+sizeof(vertex_colors), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices)+sizeof(vertex_colors)+sizeof(texture_coords), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(vertex_colors), vertex_colors);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices) + sizeof(vertex_colors), sizeof(texture_coords), texture_coords);
     // 4. Set Vertex Attribute Pointer
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)(sizeof(vertices)));
     glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)(sizeof(vertices) + sizeof(vertex_colors)));
+    glEnableVertexAttribArray(2);
     // 5.  Unbind VAO but not the EBO
     glBindVertexArray(0);
-
 
 
     // Game loop
@@ -168,14 +187,20 @@ int main()
         // Calculate color
         GLfloat timeValue = glfwGetTime();
         GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
-        GLuint ourColorLocation = glGetUniformLocation(myShader.GetProgram(), "ourColor");
         myShader.Use();
-        glUniform4f(ourColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        glUniform4f(glGetUniformLocation(myShader.GetProgram(), "myColor"), 0.0f, greenValue, 0.0f, 1.0f);
 
-        // Draw triangles
+        // Bind textures
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glUniform1i(glGetUniformLocation(myShader.GetProgram(), "myTexture1"), 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+        glUniform1i(glGetUniformLocation(myShader.GetProgram(), "myTexture2"), 1);
+        
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         // Swap the buffers
