@@ -2,6 +2,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "Shader.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -77,63 +79,23 @@ int main()
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    // Build and link shaders
-    // Vertex Shader
-    GLuint vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    string  vsSrc = readFile("vs.glsl");
-    const char* vertexShaderSource = vsSrc.c_str();
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    GLint success;
-    GLchar infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << endl;
-    }
-
-    // Fragment Shader
-    GLuint fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    string  fsSrc = readFile("fs.glsl");
-    const char* fragmentShaderSource = fsSrc.c_str();
-
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << endl;
-    }
-
-    // Link shaders and create program
-    GLuint shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        cout << "ERROR::PROGRAM::LINK_FAILED\n" << infoLog << endl;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
+    Shader myShader("vs.glsl", "fs.glsl");
 
     // Specify unique vertex data
     GLfloat vertices[] = {
-        0.5f,  0.5f, 0.0f,  // Top Right
-        0.5f, -0.5f, 0.0f,  // Bottom Right
-        -0.5f,  0.5f, 0.0f,  // Top Left 
-        -0.5f, -0.5f, 0.0f  // Bottom Left
+         0.5f,  0.5f,  0.0f,  // Top Right
+         0.5f, -0.5f,  0.0f,  // Bottom Right
+        -0.5f,  0.5f,  0.0f,  // Top Left
+        -0.5f, -0.5f,  0.0f   // Bottom Left
     };
+
+    GLfloat vertex_colors[] = {
+        1.0f,  0.0f,  0.0f,  // Top Right Color
+        0.0f,  1.0f,  0.0f,  // Bottom Right Color
+        0.0f,  0.0f,  1.0f,  // Top Left Color
+        0.0f,  0.0f,  0.0f   // Bottom Left Color
+    };
+
 
     // Vertices for 2 triangles
     GLfloat vertices1[] = {
@@ -168,10 +130,14 @@ int main()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     // 3. Bind and copy vertex array into VBO
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices)+sizeof(vertex_colors), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(vertex_colors), vertex_colors);
     // 4. Set Vertex Attribute Pointer
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)(sizeof(vertices)));
+    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -202,14 +168,14 @@ int main()
         // Calculate color
         GLfloat timeValue = glfwGetTime();
         GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
-        GLuint ourColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        glUseProgram(shaderProgram);
+        GLuint ourColorLocation = glGetUniformLocation(myShader.GetProgram(), "ourColor");
+        myShader.Use();
         glUniform4f(ourColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
         // Draw triangles
         glBindVertexArray(VAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         // Swap the buffers

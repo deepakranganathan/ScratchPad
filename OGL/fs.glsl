@@ -7,5 +7,6 @@ uniform vec4 ourColor;
 
 void main()
 {
-    color = ourColor;
+    //color = ourColor;
+	color = vertexColor;
 } 
