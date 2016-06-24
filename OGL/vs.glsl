@@ -7,9 +7,11 @@ layout (location = 2) in vec2 texCoord;	// The texCoord variable has attribute l
 out vec4 vertexColor; // Specify color to pass to fragment shader
 out vec2 TexCoord;
 
+uniform mat4 transform;
+
 void main()
 {
-    gl_Position = vec4(position, 1.0);
-	vertexColor = vec4(color, 1.0);
+    gl_Position = transform * vec4(position, 1.0f);
+	vertexColor = vec4(color, 1.0f);
 	TexCoord	= vec2(texCoord.x, 1.0f - texCoord.y);  // Invert y-axis
 }

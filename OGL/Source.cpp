@@ -2,6 +2,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <SOIL.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "Shader.h"
 
@@ -102,6 +105,7 @@ int main()
         1, 2, 3  // Second Triangle
     };
 
+
     // Load Textures
     GLuint texture1, texture2;
 
@@ -189,6 +193,13 @@ int main()
         GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
         myShader.Use();
         glUniform4f(glGetUniformLocation(myShader.GetProgram(), "myColor"), 0.0f, greenValue, 0.0f, 1.0f);
+
+        // Create transform
+        glm::mat4 trans;
+        
+        trans = glm::rotate(trans, (GLfloat)glfwGetTime() * 50.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        glUniformMatrix4fv(glGetUniformLocation(myShader.GetProgram(), "transform"), 1, GL_FALSE, glm::value_ptr(trans));
 
         // Bind textures
         glActiveTexture(GL_TEXTURE0);
