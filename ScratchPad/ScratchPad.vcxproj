@@ -150,14 +150,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\tmp.cpp" />
-    <ClCompile Include="src\tree_ops.cpp" />
+    <ClCompile Include="src\BinaryTree.cpp" />
+    <ClCompile Include="src\Graph.cpp" />
+    <ClCompile Include="src\Hierarchy.cpp" />
+    <ClCompile Include="src\LeetCode\146-LRUCache.cpp" />
+    <ClCompile Include="src\StringRotation.cpp" />
+    <ClCompile Include="src\Test.cpp" />
+    <ClCompile Include="src\Tiling2D.cpp" />
+    <ClCompile Include="src\Traits.cpp" />
+    <ClCompile Include="src\Trie.cpp" />
+    <ClCompile Include="src\Virtual.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\main.h" />
-    <ClInclude Include="src\tmp.h" />
-    <ClInclude Include="src\tree_ops.h" />
+    <ClInclude Include="src\Traits.h" />
+    <ClInclude Include="src\Hierarchy.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="test\HierarchyTest.txt" />
+    <Text Include="test\HierarchyTest_expected_BFS.txt" />
+    <Text Include="test\HierarchyTest_expected_DFS.txt" />
+    <Text Include="test\HierarchyTest_expected_DFS_sorted.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
